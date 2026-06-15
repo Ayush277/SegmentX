@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Campaign Builder - SegmentX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <div class="max-w-4xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">AI Campaign Builder</h1>
+
+      <div class="bg-white border rounded-lg p-4 shadow mb-6">
+        <label class="block text-sm font-medium text-gray-700">Campaign Name</label>
+        <input id="campaignName" class="mt-1 block w-full border rounded p-2" placeholder="e.g. Winback June" />
+
+        <label class="block text-sm font-medium text-gray-700 mt-4">Channel</label>
+        <select id="channelSelect" class="mt-1 block w-48 border rounded p-2">
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="SMS">SMS</option>
+          <option value="Email">Email</option>
+        </select>
+      </div>
+
+      <div class="bg-white border rounded-lg p-4 shadow mb-6">
+        <label class="block text-sm font-medium text-gray-700">Describe the audience and campaign intent</label>
+        <textarea id="userPrompt" rows="4" class="mt-1 block w-full border rounded p-2" placeholder="e.g. Bring back inactive customers who spent over 500 in Bangalore"></textarea>
+
+        <div class="mt-4 flex items-center space-x-3">
+          <button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Generate AI Draft</button>
+          <div id="loading" class="text-sm text-gray-500 hidden">Loading…</div>
+          <div id="error" class="text-sm text-red-600 hidden"></div>
+        </div>
+      </div>
+
+      <div id="resultArea" class="hidden bg-white border rounded-lg p-4 shadow">
+        <h2 class="text-lg font-semibold mb-2">AI Draft</h2>
+
+        <div class="mb-3">
+          <strong>Audience Size:</strong> <span id="audienceSize">0</span>
+        </div>
+
+        <div class="mb-3">
+          <strong>Segment Rules:</strong>
+          <pre id="rulesPre" class="mt-2 bg-gray-100 p-3 rounded text-sm overflow-auto"></pre>
+        </div>
+
+        <div class="mb-3">
+          <strong>Message Variants (select one):</strong>
+          <form id="variantsForm" class="mt-2 space-y-2"></form>
+        </div>
+
+        <div class="mt-4 flex items-center space-x-3">
+          <button id="launchBtn" class="bg-green-600 text-white px-4 py-2 rounded">Launch Campaign</button>
+          <div id="launchStatus" class="text-sm text-gray-500"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      const generateBtn = document.getElementById('generateBtn');
+      // Absolute root URL for generate AI draft (must match backend root route)
+      const DRAFT_URL = 'http://localhost:3002/generate-ai-draft';
+      const loading = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const resultArea = document.getElementById('resultArea');
+      const audienceSizeEl = document.getElementById('audienceSize');
+      const rulesPre = document.getElementById('rulesPre');
+      const variantsForm = document.getElementById('variantsForm');
+      const launchBtn = document.getElementById('launchBtn');
+        async function generateAIDraft() {
+          // 1. Get the user's prompt from the text area
+          const promptInput = document.getElementById('userPrompt').value;
+          clearError();
+          resultArea.classList.add('hidden');
+          launchStatus.textContent = '';
+          setLoading(true);
+
+          try {
+            // 2. Make the call to your bulletproof backend
+            const response = await fetch(DRAFT_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ prompt: promptInput })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              console.error('Backend Error:', data);
+              showError('Failed to generate draft: ' + (data.error || 'Unknown error'));
+              return;
+            }
+
+            // 3. Update Audience Size
+            if (audienceSizeEl) audienceSizeEl.textContent = data.audience_size || data.audienceSize || 0;
+
+            // 4. Update Segment Rules Display
+            if (rulesPre) rulesPre.textContent = JSON.stringify(data.segment_rules || data.rules || {}, null, 2);
+
+            // 5. Build the Radio Buttons for Message Variants
+            const messageContainer = document.getElementById('variantsForm');
+            if (messageContainer) {
+              messageContainer.innerHTML = '';
+
+              if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+                data.messages.forEach((msg, index) => {
+                  const div = document.createElement('div');
+                  div.className = 'flex items-start gap-3 mb-3 p-3 bg-gray-800 rounded border border-gray-700';
+
+                  const safeMsg = String(msg).replace(/"/g, '&quot;');
+                  div.innerHTML = `
+                    <input type="radio" id="msg-${index}" name="selectedMessage" value="${safeMsg}" class="accent-cyan-400 cursor-pointer mt-1 w-4 h-4">
+                    <label for="msg-${index}" class="text-gray-300 text-sm cursor-pointer w-full leading-relaxed">${safeMsg}</label>
+                  `;
+
+                  messageContainer.appendChild(div);
+                });
+              } else {
+                messageContainer.innerHTML = '<p class="text-red-400 p-2">No messages were generated.</p>';
+              }
+            }
+
+            // set channel select to recommended if provided
+            if (data.recommendedChannel) {
+              const sel = document.getElementById('channelSelect');
+              if (sel) sel.value = data.recommendedChannel;
+            }
+
+            resultArea.classList.remove('hidden');
+          } catch (error) {
+            console.error('Network or parsing error:', error);
+            showError('Failed to connect to the Segment X backend.');
+          } finally {
+            setLoading(false);
+          }
+        }
+
+        generateBtn.addEventListener('click', generateAIDraft);
+            messageContainer.innerHTML = '<p class="text-red-400">No messages generated.</p>';
+          }
+
+          // set channel select to recommended if provided
+          if (data.recommendedChannel) {
+            const sel = document.getElementById('channelSelect');
+            sel.value = data.recommendedChannel;
+          }
+
+          resultArea.classList.remove('hidden');
+        } catch (err) {
+          console.error(err);
+          showError(err.message || 'Failed to generate draft');
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      launchBtn.addEventListener('click', async () => {
+        clearError();
+        launchStatus.textContent = '';
+
+        const name = document.getElementById('campaignName').value.trim();
+        if (!name) return showError('Please provide a campaign name.');
+
+        // collect selected variant
+        const selected = document.querySelector('input[name="variant"]:checked');
+        if (!selected) return showError('Please select a message variant.');
+        const message = selected.value;
+
+        const channel = document.getElementById('channelSelect').value;
+        const rules = JSON.parse(rulesPre.textContent || '{}');
+
+        launchBtn.disabled = true;
+        launchStatus.textContent = 'Launching...';
+
+        try {
+          const res = await fetch('/api/campaigns/create-campaign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, segment_rules: rules, message, channel })
+          });
+
+          if (!res.ok) {
+            const j = await res.json().catch(()=>({}));
+            throw new Error(j.error || ('Create campaign failed: ' + res.status));
+          }
+
+          const created = await res.json();
+          launchStatus.textContent = 'Created campaign ID: ' + (created.id || (created.campaign && created.campaign.id) || '-');
+        } catch (err) {
+          console.error(err);
+          showError(err.message || 'Failed to create campaign');
+          launchStatus.textContent = '';
+        } finally {
+          launchBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

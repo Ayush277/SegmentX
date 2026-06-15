@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Campaign Analytics - SegmentX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <div class="max-w-4xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">Campaign Analytics (Live)</h1>
+
+      <div class="bg-white border rounded-lg p-4 shadow mb-6">
+        <label class="block text-sm font-medium text-gray-700">Campaign ID</label>
+        <div class="flex items-center space-x-2 mt-2">
+          <input id="campaignIdInput" class="border rounded p-2 w-32" type="number" value="1" />
+          <button id="startBtn" class="bg-blue-600 text-white px-3 py-2 rounded">Start</button>
+          <button id="stopBtn" class="bg-gray-200 px-3 py-2 rounded">Stop</button>
+          <div id="status" class="text-sm text-gray-600 ml-3">Idle</div>
+        </div>
+      </div>
+
+      <div class="bg-white border rounded-lg p-4 shadow">
+        <canvas id="analyticsChart" width="800" height="400"></canvas>
+      </div>
+    </div>
+
+    <script>
+      const ctx = document.getElementById('analyticsChart').getContext('2d');
+      const statusEl = document.getElementById('status');
+      let chart = null;
+      let pollInterval = null;
+
+      function createChart() {
+        const labels = ['SENT','DELIVERED','OPENED','CLICKED'];
+        const data = {
+          labels,
+          datasets: [{
+            label: 'Counts',
+            data: [0,0,0,0],
+            backgroundColor: ['#60A5FA','#34D399','#FBBF24','#F87171']
+          }]
+        };
+
+        chart = new Chart(ctx, {
+          type: 'bar',
+          data,
+          options: {
+            responsive: true,
+            animation: false,
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
+
+      async function fetchAnalytics(campaignId) {
+        if (!campaignId) return null;
+        try {
+          const res = await fetch(`/api/analytics/campaign-analytics/${campaignId}`);
+          if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+          const json = await res.json();
+          return json;
+        } catch (err) {
+          console.error('fetchAnalytics error', err);
+          return null;
+        }
+      }
+
+      function updateChartFromData(json) {
+        if (!chart || !json) return;
+        const c = json.counts || { SENT:0, DELIVERED:0, OPENED:0, CLICKED:0 };
+        chart.data.datasets[0].data = [c.SENT || 0, c.DELIVERED || 0, c.OPENED || 0, c.CLICKED || 0];
+        chart.update('none');
+      }
+
+      async function pollOnce(campaignId) {
+        statusEl.textContent = 'Fetching...';
+        const data = await fetchAnalytics(campaignId);
+        if (data) {
+          updateChartFromData(data);
+          statusEl.textContent = 'Last update: ' + new Date().toLocaleTimeString();
+        } else {
+          statusEl.textContent = 'Error fetching data';
+        }
+      }
+
+      document.getElementById('startBtn').addEventListener('click', () => {
+        const id = document.getElementById('campaignIdInput').value;
+        if (!id) { statusEl.textContent = 'Enter campaignId'; return; }
+        if (!chart) createChart();
+        // do an immediate fetch
+        pollOnce(id);
+        // clear existing interval
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(() => pollOnce(id), 2000);
+        statusEl.textContent = 'Polling...';
+      });
+
+      document.getElementById('stopBtn').addEventListener('click', () => {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        statusEl.textContent = 'Stopped';
+      });
+
+      // initialize empty chart
+      createChart();
+    </script>
+  </body>
+</html>

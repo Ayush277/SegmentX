@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Segment X — Marketing CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      /* Neon accent and glass effect helpers */
+      .neon {
+        box-shadow: 0 4px 30px rgba(0,255,210,0.08), inset 0 -2px 12px rgba(0,255,210,0.06);
+      }
+    </style>
+  </head>
+  <body class="antialiased bg-gray-950 text-gray-100">
+    <div class="min-h-screen flex">
+      <!-- Sidebar -->
+      <aside class="w-72 fixed inset-y-0 left-0 p-6 glassmorphism neon bg-white/5 backdrop-blur-md border-r border-white/5">
+        <div class="mb-8">
+          <div class="text-3xl font-extrabold text-cyan-300 tracking-wider">Segment <span class="text-cyan-200">X</span></div>
+          <p class="text-xs text-cyan-200/70 mt-1">Alien Marketing CRM</p>
+        </div>
+
+        <nav aria-label="Main navigation" class="space-y-3">
+          <a href="#" data-target="dashboard" class="nav-link block px-4 py-2 rounded-md text-cyan-100 hover:bg-cyan-900/20">Dashboard</a>
+          <a href="#" data-target="data" class="nav-link block px-4 py-2 rounded-md text-cyan-100 hover:bg-cyan-900/20">Data Import</a>
+          <a href="#" data-target="agent" class="nav-link block px-4 py-2 rounded-md text-cyan-100 hover:bg-cyan-900/20">AI Agent</a>
+          <a href="#" data-target="analytics" class="nav-link block px-4 py-2 rounded-md text-cyan-100 hover:bg-cyan-900/20">Analytics</a>
+        </nav>
+      </aside>
+
+      <!-- Main content container -->
+      <div class="flex-1 ml-72 p-8">
+        <!-- Sections -->
+        <section id="dashboard" class="panel glassmorphism bg-white/5 backdrop-blur-md p-6 rounded-lg shadow mb-6">
+          <h2 class="text-2xl font-bold text-cyan-100 mb-2">Dashboard</h2>
+          <p class="text-sm text-cyan-200/60 mb-4">Overview and quick metrics</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="p-6 rounded-xl bg-gradient-to-br from-white/6 to-white/3 border border-white/10 neon">
+              <div class="text-xs text-cyan-200">Total Customers</div>
+              <div class="mt-3">
+                <div class="text-4xl font-extrabold text-cyan-300" style="text-shadow:0 0 18px rgba(0,255,210,0.55)">1,234</div>
+              </div>
+            </div>
+
+            <div class="p-6 rounded-xl bg-gradient-to-br from-white/6 to-white/3 border border-white/10 neon">
+              <div class="text-xs text-cyan-200">Total Orders</div>
+              <div class="mt-3">
+                <div class="text-4xl font-extrabold text-cyan-300" style="text-shadow:0 0 18px rgba(0,200,255,0.45)">4,567</div>
+              </div>
+            </div>
+
+            <div class="p-6 rounded-xl bg-gradient-to-br from-white/6 to-white/3 border border-white/10 neon">
+              <div class="text-xs text-cyan-200">Active Campaigns</div>
+              <div class="mt-3">
+                <div class="text-4xl font-extrabold text-cyan-300" style="text-shadow:0 0 18px rgba(180,255,120,0.45)">3</div>
+              </div>
+            </div>
+
+            <div class="p-6 rounded-xl bg-gradient-to-br from-white/6 to-white/3 border border-white/10 neon">
+              <div class="text-xs text-cyan-200">Messages Sent</div>
+              <div class="mt-3">
+                <div class="text-4xl font-extrabold text-cyan-300" style="text-shadow:0 0 18px rgba(255,180,120,0.35)">12,345</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="data" class="panel hidden glassmorphism bg-white/5 backdrop-blur-md p-6 rounded-lg shadow mb-6">
+          <h2 class="text-2xl font-bold text-cyan-100 mb-2">Data Import</h2>
+          <p class="text-sm text-cyan-200/60 mb-4">Upload CSVs for customers and orders</p>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Customers upload -->
+            <div class="p-4 rounded-lg bg-white/6 neon">
+              <div class="text-sm text-cyan-200 mb-2">Customers CSV</div>
+              <div id="customers-drop" class="cursor-pointer p-6 rounded-md border-2 border-dashed border-cyan-700/40 hover:border-cyan-400/70" style="background:rgba(255,255,255,0.02)">
+                <input id="customers-file" type="file" accept="text/csv" class="hidden" />
+                <div class="text-cyan-200/70">Drag & drop your customers CSV here, or <span id="customers-browse" class="underline">browse</span>.</div>
+                <div id="customers-filename" class="mt-3 text-xs text-cyan-200/50">No file selected</div>
+              </div>
+              <div class="mt-3 flex items-center gap-3">
+                <button id="upload-customers-btn" class="px-4 py-2 rounded-md bg-cyan-500 text-white">Upload</button>
+                <span id="customers-status" class="text-xs text-cyan-200/60"></span>
+              </div>
+            </div>
+
+            <!-- Orders upload -->
+            <div class="p-4 rounded-lg bg-white/6 neon">
+              <div class="text-sm text-cyan-200 mb-2">Orders CSV</div>
+              <div id="orders-drop" class="cursor-pointer p-6 rounded-md border-2 border-dashed border-cyan-700/40 hover:border-cyan-400/70" style="background:rgba(255,255,255,0.02)">
+                <input id="orders-file" type="file" accept="text/csv" class="hidden" />
+                <div class="text-cyan-200/70">Drag & drop your orders CSV here, or <span id="orders-browse" class="underline">browse</span>.</div>
+                <div id="orders-filename" class="mt-3 text-xs text-cyan-200/50">No file selected</div>
+              </div>
+              <div class="mt-3 flex items-center gap-3">
+                <button id="upload-orders-btn" class="px-4 py-2 rounded-md bg-cyan-500 text-white">Upload</button>
+                <span id="orders-status" class="text-xs text-cyan-200/60"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-cyan-100 font-medium mb-2">Recently Ingested Customers</h3>
+            <div class="overflow-x-auto rounded-md">
+              <table id="customers-table" class="w-full text-left table-auto">
+                <thead class="text-xs text-cyan-200/70" style="border-bottom:2px solid rgba(6,182,212,0.45); box-shadow:0 6px 18px rgba(6,182,212,0.06)">
+                  <tr>
+                    <th class="px-3 py-2">ID</th>
+                    <th class="px-3 py-2">Name</th>
+                    <th class="px-3 py-2">Email</th>
+                    <th class="px-3 py-2">City</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-tbody" class="text-sm text-gray-200/90">
+                  <tr><td class="px-3 py-2" colspan="4">No customers loaded</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="agent" class="panel hidden glassmorphism bg-white/5 backdrop-blur-md p-6 rounded-lg shadow mb-6">
+          <h2 class="text-2xl font-bold text-cyan-100 mb-2">AI Agent</h2>
+          <p class="text-sm text-cyan-200/60 mb-4">Create AI-powered campaign drafts from natural language prompts</p>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="p-4 rounded-lg bg-white/6 neon">
+              <label for="ai-prompt" class="text-sm text-cyan-200 mb-2 block">Type your campaign intent / audience description</label>
+              <textarea id="ai-prompt" rows="8" class="w-full bg-black/60 text-cyan-100 placeholder-cyan-300/40 p-4 rounded-md resize-none border border-white/5 focus:outline-none focus:ring-2 focus:ring-cyan-400/40" placeholder="e.g. Find customers in Austin who spent > $200 in last 6 months but haven't bought in 90 days..." style="box-shadow:0 8px 30px rgba(6,182,212,0.06)" ></textarea>
+
+              <div class="mt-4 flex items-center gap-3">
+                <button id="generate-draft-btn" class="px-4 py-2 rounded-md bg-cyan-500 text-white">Generate AI Draft</button>
+                <div id="ai-status" class="text-sm text-cyan-200/60"> </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-white/6 neon">
+              <div id="ai-results" class="hidden">
+                <div class="mb-3">
+                  <div class="text-xs text-cyan-200">Audience Size</div>
+                  <div id="audience-size" class="text-4xl font-extrabold text-cyan-300" style="text-shadow:0 0 20px rgba(0,255,210,0.45)">0</div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="text-xs text-cyan-200 mb-1">Segment Rules</div>
+                  <pre class="bg-black/50 p-3 rounded-md overflow-auto text-xs text-cyan-100" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;"><code id="segment-rules">{}</code></pre>
+                </div>
+
+                <div class="mb-4">
+                  <div class="text-xs text-cyan-200 mb-2">Message Variants</div>
+                  <div id="variants-list" class="space-y-2"></div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <input id="campaign-name" type="text" placeholder="Campaign name (e.g. " class="flex-1 px-3 py-2 rounded-md bg-black/40 text-cyan-100 border border-white/5" />
+                  <button id="launch-campaign-btn" class="px-4 py-2 rounded-md bg-rose-500 text-white">Launch Campaign</button>
+                </div>
+                <div id="launch-status" class="mt-2 text-sm text-cyan-200/60"></div>
+              </div>
+
+              <div id="ai-empty" class="text-sm text-cyan-200/60">No draft generated yet. Use the prompt to generate a draft.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="analytics" class="panel hidden glassmorphism bg-white/5 backdrop-blur-md p-6 rounded-lg shadow mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-2xl font-bold text-cyan-100">Analytics</h2>
+              <p class="text-sm text-cyan-200/60">Live charts and campaign performance</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-cyan-200/70">Campaign ID</label>
+              <input id="analytics-campaign-id" type="number" value="1" min="1" class="w-24 px-2 py-1 rounded-md bg-black/40 text-cyan-100 border border-white/5" />
+              <button id="analytics-refresh" class="px-3 py-1 rounded-md bg-cyan-600 text-white text-sm">Refresh</button>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-white/6 neon">
+            <canvas id="analytics-chart" height="150"></canvas>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      // Backend API base - change if your backend runs on a different port
+      const API_BASE = 'http://localhost:3002/api';
+      // Absolute root URL for generate AI draft (must match backend root route)
+      const DRAFT_URL = 'http://localhost:3002/generate-ai-draft';
+
+      // Basic SPA navigation: show/hide sections
+      const links = document.querySelectorAll('.nav-link');
+      const panels = document.querySelectorAll('.panel');
+
+      function hideAll() {
+        panels.forEach(p => p.classList.add('hidden'));
+      }
+
+      function show(id) {
+        hideAll();
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('hidden');
+      }
+
+      links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = link.getAttribute('data-target');
+          show(target);
+          // update active styles
+          links.forEach(l => l.classList.remove('bg-cyan-900/25'));
+          link.classList.add('bg-cyan-900/25');
+        });
+      });
+
+      // show dashboard by default
+      show('dashboard');
+
+      // --- Data import helpers ---
+      function bindUploadArea(dropId, inputId, browseId, filenameId) {
+        const drop = document.getElementById(dropId);
+        const input = document.getElementById(inputId);
+        const browse = document.getElementById(browseId);
+        const filename = document.getElementById(filenameId);
+
+        drop.addEventListener('click', () => input.click());
+        browse.addEventListener('click', () => input.click());
+
+        input.addEventListener('change', () => {
+          if (input.files && input.files[0]) {
+            filename.textContent = input.files[0].name;
+          } else {
+            filename.textContent = 'No file selected';
+          }
+        });
+
+        ['dragenter','dragover'].forEach(ev => {
+          drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('ring','ring-cyan-400/30'); });
+        });
+        ['dragleave','drop'].forEach(ev => {
+          drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('ring','ring-cyan-400/30'); });
+        });
+
+        drop.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const f = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) {
+            input.files = e.dataTransfer.files;
+            filename.textContent = f.name;
+          }
+        });
+      }
+
+      function uploadFile(endpoint, fileInputId, statusId, successCb) {
+        const input = document.getElementById(fileInputId);
+        const status = document.getElementById(statusId);
+        if (!input.files || !input.files[0]) {
+          status.textContent = 'Please select a file first';
+          return;
+        }
+        const file = input.files[0];
+        const fd = new FormData();
+        fd.append('file', file);
+
+        status.textContent = 'Uploading...';
+        fetch(endpoint, { method: 'POST', body: fd })
+          .then(async res => {
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+          })
+          .then(json => {
+            status.textContent = 'Upload successful';
+            if (successCb) successCb(json);
+            // refresh customers list after upload
+            loadCustomers();
+          })
+          .catch(err => {
+            console.error(err);
+            status.textContent = 'Upload failed';
+          });
+      }
+
+      function loadCustomers() {
+        const tbody = document.getElementById('customers-tbody');
+        tbody.innerHTML = '<tr><td class="px-3 py-2" colspan="4">Loading...</td></tr>';
+        fetch(`${API_BASE}/customers`)
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to fetch customers');
+            return res.json();
+          })
+          .then(list => {
+            if (!Array.isArray(list) || list.length === 0) {
+              tbody.innerHTML = '<tr><td class="px-3 py-2" colspan="4">No customers found</td></tr>';
+              return;
+            }
+            tbody.innerHTML = '';
+            list.forEach(c => {
+              const row = document.createElement('tr');
+              row.innerHTML = `<td class="px-3 py-2">${c.id}</td><td class="px-3 py-2">${c.name||''}</td><td class="px-3 py-2">${c.email||''}</td><td class="px-3 py-2">${c.city||''}</td>`;
+              tbody.appendChild(row);
+            });
+          })
+          .catch(err => {
+            console.error(err);
+            tbody.innerHTML = '<tr><td class="px-3 py-2" colspan="4">Failed to load customers</td></tr>';
+          });
+      }
+
+      // --- AI Agent helpers ---
+      let lastDraft = null;
+
+      async function generateAIDraft() {
+        const promptEl = document.getElementById('ai-prompt');
+        const statusEl = document.getElementById('ai-status');
+        const resultsEl = document.getElementById('ai-results');
+        const emptyEl = document.getElementById('ai-empty');
+
+        const prompt = (promptEl.value || '').trim();
+        if (!prompt) {
+          statusEl.textContent = 'Please enter a prompt.';
+          return;
+        }
+
+        statusEl.textContent = 'Processing...';
+        document.getElementById('generate-draft-btn').disabled = true;
+
+        try {
+          const res = await fetch(DRAFT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt })
+          });
+
+          if (!res.ok) {
+            // Strict: throw with response.statusText and log it
+            console.error('generate-ai-draft failed:', res.statusText || `status ${res.status}`);
+            throw new Error(res.statusText || `AI service failed with status ${res.status}`);
+          }
+
+          const json = await res.json();
+          // expected shape: { rules, audienceSize, variants, recommendedChannel }
+          lastDraft = json;
+
+          emptyEl.classList.add('hidden');
+          resultsEl.classList.remove('hidden');
+
+          document.getElementById('audience-size').textContent = json.audienceSize ?? 0;
+          document.getElementById('segment-rules').textContent = JSON.stringify(json.rules || {}, null, 2);
+
+          const variantsList = document.getElementById('variants-list');
+          variantsList.innerHTML = '';
+          (json.variants || []).forEach((v, idx) => {
+            const id = `variant-${idx}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-start gap-3';
+
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'variant';
+            radio.id = id;
+            radio.value = idx;
+            radio.className = 'mt-1';
+            if (idx === 0) radio.checked = true;
+
+            const label = document.createElement('label');
+            label.htmlFor = id;
+            label.className = 'block p-3 rounded-md bg-black/40 text-cyan-100 text-sm';
+            label.innerText = v;
+
+            wrapper.appendChild(radio);
+            wrapper.appendChild(label);
+            variantsList.appendChild(wrapper);
+          });
+
+          // set default campaign name
+          const nameInput = document.getElementById('campaign-name');
+          if (nameInput && !nameInput.value) {
+            nameInput.value = (prompt.length > 40 ? prompt.slice(0,40) + '...' : prompt);
+          }
+
+          statusEl.textContent = 'Draft ready';
+        } catch (err) {
+          // Log full error (network/CORS or backend message)
+          console.error('generateAIDraft error:', err);
+          // Also show an alert so the user sees the backend error immediately
+          alert('Generate AI Draft error: ' + (err && err.message ? err.message : String(err)));
+          statusEl.textContent = 'Failed to generate draft';
+        } finally {
+          document.getElementById('generate-draft-btn').disabled = false;
+        }
+      }
+
+      async function launchCampaign() {
+        const launchStatus = document.getElementById('launch-status');
+        if (!lastDraft) {
+          launchStatus.textContent = 'No draft available to launch';
+          return;
+        }
+
+        const name = (document.getElementById('campaign-name').value || '').trim() || 'AI Campaign';
+        const selected = document.querySelector('input[name="variant"]:checked');
+        if (!selected) {
+          launchStatus.textContent = 'Please select a message variant';
+          return;
+        }
+        const variantIndex = parseInt(selected.value, 10);
+        const message = (lastDraft.variants && lastDraft.variants[variantIndex]) || '';
+        const payload = {
+          name,
+          segment_rules: lastDraft.rules || {},
+          message,
+          channel: lastDraft.recommendedChannel || 'email'
+        };
+
+        launchStatus.textContent = 'Launching...';
+        document.getElementById('launch-campaign-btn').disabled = true;
+
+        try {
+          const res = await fetch(`${API_BASE}/campaigns/create-campaign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error(await res.text());
+          const json = await res.json();
+          launchStatus.textContent = `Campaign launched (id: ${json.id || json.campaign?.id || 'unknown'})`;
+        } catch (err) {
+          console.error(err);
+          launchStatus.textContent = 'Failed to launch campaign';
+        } finally {
+          document.getElementById('launch-campaign-btn').disabled = false;
+        }
+      }
+
+      // Bind UI elements
+      document.addEventListener('DOMContentLoaded', () => {
+        bindUploadArea('customers-drop','customers-file','customers-browse','customers-filename');
+        bindUploadArea('orders-drop','orders-file','orders-browse','orders-filename');
+
+        document.getElementById('upload-customers-btn').addEventListener('click', () => {
+          uploadFile(`${API_BASE}/upload/upload-customers`, 'customers-file', 'customers-status');
+        });
+        document.getElementById('upload-orders-btn').addEventListener('click', () => {
+          uploadFile(`${API_BASE}/upload/upload-orders`, 'orders-file', 'orders-status');
+        });
+
+        // AI Agent bindings
+        const genBtn = document.getElementById('generate-draft-btn');
+        if (genBtn) genBtn.addEventListener('click', generateAIDraft);
+
+        const launchBtn = document.getElementById('launch-campaign-btn');
+        if (launchBtn) launchBtn.addEventListener('click', launchCampaign);
+
+        // initial load
+        loadCustomers();
+        // initialize analytics chart and polling
+        initAnalyticsChart();
+        startAnalyticsPolling();
+        document.getElementById('analytics-refresh').addEventListener('click', () => {
+          // immediate refresh when user clicks
+          pollAnalyticsOnce();
+        });
+      });
+
+      // --- Analytics (Chart.js) ---
+      let analyticsChart = null;
+      let analyticsInterval = null;
+
+      function initAnalyticsChart() {
+        const ctx = document.getElementById('analytics-chart').getContext('2d');
+        const data = {
+          labels: ['SENT','DELIVERED','OPENED','CLICKED'],
+          datasets: [{
+            label: 'Counts',
+            data: [0,0,0,0],
+            backgroundColor: ['rgba(6,182,212,0.9)','rgba(124,58,237,0.9)','rgba(6,182,212,0.6)','rgba(124,58,237,0.6)'],
+            borderColor: ['rgba(6,182,212,1)','rgba(124,58,237,1)','rgba(6,182,212,0.8)','rgba(124,58,237,0.8)'],
+            borderWidth: 1,
+            borderRadius: 8,
+            barThickness: 36
+          }]
+        };
+
+        const options = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { bodyColor: '#fff', titleColor: '#fff', backgroundColor: 'rgba(0,0,0,0.7)' }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#e6f9fb' },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#e6f9fb' },
+              grid: { color: 'rgba(255,255,255,0.03)' }
+            }
+          }
+        };
+
+        analyticsChart = new Chart(ctx, { type: 'bar', data, options });
+      }
+
+      async function pollAnalyticsOnce() {
+        const id = document.getElementById('analytics-campaign-id').value || '1';
+        try {
+          const res = await fetch(`${API_BASE}/analytics/campaign-analytics/${encodeURIComponent(id)}`);
+          if (!res.ok) throw new Error('Failed to fetch analytics');
+          const json = await res.json();
+          const counts = json.counts || {};
+          const newData = [counts.SENT||0, counts.DELIVERED||0, counts.OPENED||0, counts.CLICKED||0];
+          if (analyticsChart) {
+            analyticsChart.data.datasets[0].data = newData;
+            analyticsChart.update();
+          }
+        } catch (err) {
+          console.error('Analytics poll error', err);
+        }
+      }
+
+      function startAnalyticsPolling() {
+        // clear existing interval
+        if (analyticsInterval) clearInterval(analyticsInterval);
+        analyticsInterval = setInterval(pollAnalyticsOnce, 2000);
+        // initial immediate poll
+        pollAnalyticsOnce();
+      }
+    </script>
+  </body>
+</html>

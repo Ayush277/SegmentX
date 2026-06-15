@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Data Management - SegmentX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <div class="max-w-4xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">Data Management</h1>
+
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white border rounded-lg p-4 shadow">
+          <h2 class="font-medium mb-2">Upload Customers CSV</h2>
+          <input id="customersFile" type="file" accept=".csv" class="mb-3" />
+          <div>
+            <button id="uploadCustomersBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Upload Customers</button>
+            <span id="custUploadStatus" class="ml-3 text-sm text-gray-600"></span>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-lg p-4 shadow">
+          <h2 class="font-medium mb-2">Upload Orders CSV</h2>
+          <input id="ordersFile" type="file" accept=".csv" class="mb-3" />
+          <div>
+            <button id="uploadOrdersBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Upload Orders</button>
+            <span id="ordersUploadStatus" class="ml-3 text-sm text-gray-600"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white border rounded-lg p-4 shadow">
+        <h2 class="font-medium mb-2">Customers</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr class="text-left text-sm text-gray-600">
+              <th class="px-3 py-2">ID</th>
+              <th class="px-3 py-2">Name</th>
+              <th class="px-3 py-2">Email</th>
+              <th class="px-3 py-2">City</th>
+            </tr>
+          </thead>
+          <tbody id="customersTbody" class="bg-white divide-y divide-gray-100 text-sm"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <script>
+      // Backend API base - change if your backend runs on a different port
+      const API_BASE = 'http://localhost:3002/api';
+      const uploadCustomersBtn = document.getElementById('uploadCustomersBtn');
+      const uploadOrdersBtn = document.getElementById('uploadOrdersBtn');
+      const customersFile = document.getElementById('customersFile');
+      const ordersFile = document.getElementById('ordersFile');
+      const custUploadStatus = document.getElementById('custUploadStatus');
+      const ordersUploadStatus = document.getElementById('ordersUploadStatus');
+      const customersTbody = document.getElementById('customersTbody');
+
+      function showAlert(msg) {
+        alert(msg);
+      }
+
+      async function uploadFile(fileInput, url, statusEl) {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) { statusEl.textContent = 'No file selected'; return; }
+        statusEl.textContent = 'Uploading...';
+        const fd = new FormData();
+        fd.append('file', file);
+
+        try {
+          const res = await fetch(url, { method: 'POST', body: fd });
+          const json = await res.json().catch(()=>({}));
+          if (!res.ok) throw new Error(json.error || ('Upload failed: ' + res.status));
+          statusEl.textContent = 'Upload successful';
+          showAlert('Upload successful');
+          // refresh customers table after upload
+          await fetchAndRenderCustomers();
+        } catch (err) {
+          console.error('upload error', err);
+          statusEl.textContent = 'Upload failed';
+          showAlert('Upload failed: ' + (err.message || 'unknown'));
+        }
+      }
+
+      uploadCustomersBtn.addEventListener('click', () => uploadFile(customersFile, `${API_BASE}/upload/upload-customers`, custUploadStatus));
+      uploadOrdersBtn.addEventListener('click', () => uploadFile(ordersFile, `${API_BASE}/upload/upload-orders`, ordersUploadStatus));
+
+      async function fetchAndRenderCustomers() {
+        customersTbody.innerHTML = '<tr><td colspan="4" class="p-3 text-sm text-gray-500">Loading...</td></tr>';
+        try {
+          const res = await fetch(`${API_BASE}/customers`);
+          if (!res.ok) throw new Error('Failed to fetch customers');
+          const customers = await res.json();
+          customersTbody.innerHTML = '';
+          customers.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="px-3 py-2">${c.id}</td>
+              <td class="px-3 py-2">${c.name || ''}</td>
+              <td class="px-3 py-2">${c.email || ''}</td>
+              <td class="px-3 py-2">${c.city || ''}</td>
+            `;
+            customersTbody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error('fetch customers error', err);
+          customersTbody.innerHTML = '<tr><td colspan="4" class="p-3 text-sm text-red-600">Failed to load customers</td></tr>';
+        }
+      }
+
+      // initial load
+      fetchAndRenderCustomers();
+    </script>
+  </body>
+</html>
